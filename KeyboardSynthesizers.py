@@ -5,6 +5,8 @@ import math
 from math import *
 import pyaudio
 import numpy as np
+from scipy import signal
+import struct
 
 BLOCKLEN   = 64        # Number of frames per block
 WIDTH       = 2         # Bytes per sample
@@ -50,7 +52,39 @@ KEYPRESS = False
 root = Tk.Tk()
 
 def play(event):
+    global CONTINUE
+    global KEYPRESS
+    global k,f0,fk, a1, b1
     print('You clicked at position (%d, %d)' % (event.x, event.y))
+    #print('You pressed ' + event.char)
+    if event.char == 'q':
+      print('Good bye')
+      CONTINUE = False
+    KEYPRESS = True
+
+    print(event.x)
+    if (event.x<200):
+        k = 1
+        print("1")
+    elif(event.x>=200 and event.x < 400):
+        k = 2
+        print("2")
+    elif(event.x>=400 and event.x < 600):
+        k = 3
+        print("3")
+    elif(event.x>=600 and event.x < 800):
+        k = 4
+        print("4")
+    elif(event.x>=800 and event.x < 1000):
+        k = 5       
+        print("5")
+
+    fk = math.pow(2,k/5) * f0
+
+    om1 = 2.0 * pi * float(fk)/RATE
+    a1 = [1, -2*r*cos(om1), r**2]
+    b1 = [r*sin(om1)]
+
 
 root.title('Keyboard Synthesizers')
 root.configure(background= 'black')
@@ -73,4 +107,28 @@ topFrame.bind("<Button-1>",  play)
 bottomFrame.bind("<Button-1>",  play)
 
 
-root.mainloop()
+while CONTINUE:
+    root.update()
+
+    if KEYPRESS:
+        # Some key (not 'q') was pressed
+        x[0] = 10000.0
+    [y, states] = signal.lfilter(b1, a1, x, zi = states)
+    x[0] = 0.0 
+
+    KEYPRESS = False
+
+    #y = y1
+    y = np.clip(y.astype(int), -MAXVALUE, MAXVALUE)     # Clipping
+
+    binary_data = struct.pack('h' * BLOCKLEN, *y)    # Convert to binary binary data
+    stream.write(binary_data, BLOCKLEN)     
+
+
+
+stream.stop_stream()
+stream.close()
+p.terminate()
+
+
+#root.mainloop()
