@@ -7,10 +7,7 @@ import pyaudio
 import numpy as np
 from scipy import signal
 import struct
-
-import time
 import speech_recognition as sr
-
 
 BLOCKLEN   = 64        # Number of frames per block
 WIDTH       = 2         # Bytes per sample
@@ -55,12 +52,10 @@ KEYPRESS = False
 ################ GUI part ############
 root = Tk.Tk()
 
-text = ""
-
 def play(event):
     global CONTINUE
     global KEYPRESS
-    global k,f0,fk, a1, b1, text
+    global k,f0,fk, a1, b1
     print('You clicked at position (%d, %d)' % (event.x, event.y))
     #print('You pressed ' + event.char)
     if event.char == 'q':
@@ -68,13 +63,7 @@ def play(event):
       CONTINUE = False
     KEYPRESS = True
 
-    for ch in str(text):
-        print(str(ch))
-        playchar(ch)
-    
-    '''
     print(event.x)
-
     if (event.x<200):
         k = 1
         print("1")
@@ -94,84 +83,28 @@ def play(event):
     fk = math.pow(2,k/5) * f0
 
     om1 = 2.0 * pi * float(fk)/RATE
-    a1 = [1, -2 * r * cos(om1), r ** 2]
+    a1 = [1, -2*r*cos(om1), r**2]
     b1 = [r*sin(om1)]
-    '''
-
-def playspeech():
-    global text
-
-    text = "hello"
-
-    for ch in str(text):
-        #print(str(ch))
-        playchar(ch)
-        
-        
-        
-
-def playchar(ch):
-    global KEYPRESS
-    global k,f0,fk, a1, b1
-
-    KEYPRESS = True
-
-    if(ch.isalpha()):
-        outputch = ord(ch) - ord('a')
-    elif(ch.isdigit()):
-        outputch = ord(ch) - ord('0') + 26
-    
-    print(outputch)
-
-    fk = math.pow(2,outputch/36) * f0
-
-    om1 = 2.0 * pi * float(fk)/RATE
-    a1 = [1, -2 * r * cos(om1), r ** 2]
-    b1 = [r*sin(om1)]
-
-
-def record():
-    global text
-
-    r = sr.Recognizer()
-
-    with sr.Microphone() as source:
-        print('Speak something')
-        audio = r.listen(source, timeout = None)
-
-        try: 
-            text = str(r.recognize_google(audio))
-            print("You said : {}".format(text))
-        except:
-            print("Sorry could not recognize your voice")
-
 
 
 root.title('Keyboard Synthesizers')
 root.configure(background= 'black')
 root.geometry('1200x700')
 
-topFrame = Label(root, text = "Speech-Piano Auto Player", width = 80, height = 8)
+topFrame = Frame(root, width = 200, height = 100)
 topFrame.pack(side = TOP)
-topFrame.configure(background='white')
-
-recordButton = Button(root, text = "Record", command = record, width = 20, height = 5)
-recordButton.pack(side = TOP, pady = 10)
-
-playButton = Button(root, text = "Play", command = playspeech, width = 20, height = 5)
-playButton.pack(side = TOP, pady = 10)
-
-bottomFrame = Canvas(root, width = 1080, height = 350)
-bottomFrame.pack(side = BOTTOM, padx = 60)
+topFrame.configure(background='black')
+bottomFrame = Canvas(root, width = 1000, height = 350)
+bottomFrame.pack(side = BOTTOM, padx = 100)
 bottomFrame.configure(background='white')
 
 
-for i in range(36):
-    xpos = 30 * i
-    bottomFrame.create_line(xpos,0,xpos,350, width = 2)
+for i in range(5):
+    xpos = 200 * i
+    bottomFrame.create_line(xpos,0,xpos,350, width = 5)
     
 
-#topFrame.bind("<Button-1>",  play)
+topFrame.bind("<Button-1>",  play)
 bottomFrame.bind("<Button-1>",  play)
 
 
@@ -190,14 +123,10 @@ while CONTINUE:
     y = np.clip(y.astype(int), -MAXVALUE, MAXVALUE)     # Clipping
 
     binary_data = struct.pack('h' * BLOCKLEN, *y)    # Convert to binary binary data
-    stream.write(binary_data, BLOCKLEN)    
-     
+    stream.write(binary_data, BLOCKLEN)     
 
 
 
 stream.stop_stream()
 stream.close()
 p.terminate()
-
-
-#root.mainloop()
