@@ -1,3 +1,4 @@
+# import the necessary library
 from tkinter import *
 import tkinter as Tk
 from tkinter import messagebox
@@ -53,31 +54,44 @@ stream = p.open(
 CONTINUE = True
 KEYPRESS = False
 
-################ GUI part ############
+################ GUI part ##############
 root = Tk.Tk()
 
+# set a default value for piano-text
+
+# need a string to store the input voice transfered string
 text = "how are you"
+
+# need a list to store the single character
 textlist = ['h', 'o', 'w', 'a', 'r', 'e', 'y', 'o', 'u']
+
+# a string to show what is playing currently
 currenttext = ''
 
+# a function use to play the voice when you press PLAY button
 def play():
     global text, textlist
+
+    # if the there are nothing inthe textlist, show messagebox.
     if not textlist:
         messagebox.showinfo("Warning", "We are run out of character! Please record more!")
 
+    # after check the empty list, use the first character in the textlist to play the voice
     playchar(textlist[0])
 
-    # handle the output text on the middle of application
+    # show the current character poped out from textlist
     currentchar = textlist.pop(0)
+    # change the currenttext
     currenttext.configure(text = str("Current Playing: " + currentchar))
 
-
+    # change the textLabel and if it is space, skip the space
     if (text[0] == " "):
         text = text[2:]
     else:
         text = text[1:]
     textLebel.configure(text = text)
 
+    # if text is empty, show warning message.
     if (text == ""): 
         textLebel.configure(text = "Press Record for more character!")
     print(text)
@@ -86,60 +100,83 @@ def playchar(ch):
     global KEYPRESS
     global k,f0,fk, a1, b1
 
+    # in order to make voice, KEYPRESS must be True
     KEYPRESS = True
 
+    # check if the current character is alpha or digit
     if(ch.isalpha()):
+        # if it is digit, make it a number from 0-26
         outputch = ord(ch) - ord('a')
     elif(ch.isdigit()):
+        # if it is alpha, make it a number from 27-36
         outputch = ord(ch) - ord('0') + 26
     else:
+        # otherwise, make it 0
         outputch = 0
     
     print(outputch)
 
+    # following code is us to change the voice 
     fk = math.pow(2,outputch/36) * f0
 
     om1 = 2.0 * pi * float(fk)/RATE
     a1 = [1, -2 * r * cos(om1), r ** 2]
     b1 = [r*sin(om1)]
 
+    ### change the keyboard color to black, and back to white in 2 seconds.
+    # check the position of current text number
     xpos = outputch *30+15
+    # since the width of each key is 30, and width between is 2, 
+    # so the width of changed color is 28
     bottomFrame.create_line(xpos,0,xpos,350, width = 28)
+    # make the color disappear in 2 seconds with function colorchange, and position
     root.after(200, colorchange, xpos)
 
+# function to change the color back to white
 def colorchange(xpos):
     bottomFrame.create_line(xpos,0,xpos,350, width = 28, fill = 'white')
 
+# function to record the user's voice and change to text
+# when user press RECORD button
 def record():
     global text, textlist
 
+    # create a Recognizer Object
     r = sr.Recognizer()
 
+    # make microphone as the voice source
     with sr.Microphone() as source:
         print('Speak something')
-        audio = r.listen(source, timeout = 3)
+        # let Recognizer listen from microphone
+        audio = r.listen(source, timeout = None)
 
         try: 
+            # use Google Speech Recognition to transfer the voice to string message
             text = str(r.recognize_google(audio))
             textlist = []
             print("You said : {}".format(text))
         except:
             print("Sorry could not recognize your voice")
 
+    # split the string to a list of word
     wordlist = text.split()
 
+    # add characters to textlist by run word by word, and only add teh alpha or number character
     for word in wordlist:
         for char in word:
             if (char.isalnum()):
                 textlist.append(char)
 
+    # change the output textLabel to updated text
     textLebel.configure(text = text)
     print(textlist)
 
+# function use to quit the game when user press QUIT button
 def exitGame():
     global CONTINUE
     CONTINUE = False
 
+### GUI's setting
 root.title('Keyboard Synthesizers')
 root.configure(background= 'black')
 root.geometry('1200x700')
@@ -173,7 +210,7 @@ bottomFrame = Canvas(root, width = 1080, height = 350)
 bottomFrame.pack(side = BOTTOM, padx = 60)
 bottomFrame.configure(background='white')
 
-
+# draw lines for different key on keyboard
 for i in range(36):
     xpos = 30 * i
     bottomFrame.create_line(xpos,0,xpos,350, width = 2)
