@@ -1,2 +1,0 @@
-# DSPFinalProj
-a Keyboard Synthesizer
